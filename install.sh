@@ -3,20 +3,40 @@
 # If a destination already exists, asks before replacing it.
 # Also merges the permission rules in settings.json into ~/.claude/settings.json
 # (requires python3), leaving every other setting untouched.
+#
+# Usage: ./install.sh [-y|--yes]
+#   -y, --yes   Answer yes to every question (for non-interactive runs).
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TARGET="${HOME}/.claude"
+ASSUME_YES=false
+
+case "${1-}" in
+  "") ;;
+  -y|--yes) ASSUME_YES=true ;;
+  *) echo "Usage: $0 [-y|--yes]" >&2; exit 2 ;;
+esac
+
+# confirm <question>: succeeds if the user answers yes (or --yes was given).
+confirm() {
+  local answer=""
+  if [[ "$ASSUME_YES" == true ]]; then
+    echo "$1 [y/N] y (--yes)"
+    return 0
+  fi
+  read -r -p "$1 [y/N] " answer || true
+  [[ "$answer" =~ ^[Yy]$ ]]
+}
 
 install_file() {
-  local src="$1" dest="$2" answer=""
+  local src="$1" dest="$2"
   if [[ -e "$dest" || -L "$dest" ]]; then
     if [[ ! -L "$dest" ]] && cmp -s "$src" "$dest"; then
       echo "Up to date ${dest}"
       return
     fi
-    read -r -p "${dest} already exists. Replace it? [y/N] " answer || true
-    if [[ ! "$answer" =~ ^[Yy]$ ]]; then
+    if ! confirm "${dest} already exists. Replace it?"; then
       echo "Skipped ${dest}"
       return
     fi
@@ -57,7 +77,7 @@ PY
 }
 
 merge_permissions() {
-  local src="${REPO}/settings.json" dest="${TARGET}/settings.json" missing answer=""
+  local src="${REPO}/settings.json" dest="${TARGET}/settings.json" missing
   if ! command -v python3 >/dev/null; then
     echo "python3 not found: skipped permissions in ${dest}"
     return
@@ -69,8 +89,7 @@ merge_permissions() {
   fi
   echo "These permission rules will be added to ${dest}:"
   echo "$missing"
-  read -r -p "Add them? [y/N] " answer || true
-  if [[ ! "$answer" =~ ^[Yy]$ ]]; then
+  if ! confirm "Add them?"; then
     echo "Skipped permissions in ${dest}"
     return
   fi
@@ -79,9 +98,7 @@ merge_permissions() {
 }
 
 echo "This installer only works with Claude Code: it copies files into ${TARGET}."
-confirm=""
-read -r -p "Continue? [y/N] " confirm || true
-if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+if ! confirm "Continue?"; then
   echo "Aborted. Nothing was installed."
   exit 1
 fi

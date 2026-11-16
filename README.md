@@ -26,6 +26,12 @@ Claude Code needs to load `AGENTS.md`, but out of the box it only reads `CLAUDE.
 
 Copies `AGENTS.md` and the subagents into `~/.claude`, asking before replacing any file that already exists. It also merges the permission rules from `settings.json` into `~/.claude/settings.json` (requires `python3`), adding only the missing rules and leaving every other setting untouched.
 
+The script asks for confirmation, so it needs an interactive terminal. To run it non-interactively (for example from inside Claude Code), pass `--yes` to answer yes to every question, including replacing existing files:
+
+```bash
+./install.sh --yes
+```
+
 ## License
 
 MIT
