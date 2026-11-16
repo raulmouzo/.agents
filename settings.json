@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "ask": [
+      "Read(**/.env)",
+      "Read(**/.env.local)",
+      "Read(**/context.xml)",
+      "Read(**/server.xml)",
+      "Read(**/persistence.xml)"
+    ]
+  }
+}
